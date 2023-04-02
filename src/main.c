@@ -3,6 +3,8 @@
 #include <argp.h>
 #include <stdbool.h>
 
+#include "../inc/main.h"
+
 const char *argp_program_version = "argp-ex3 1.0";
 const char *argp_program_bug_address = "<bug-gnu-utils@gnu.org>";
 
@@ -17,13 +19,14 @@ static char args_doc[] = "idk....";
 
 /* The options we understand. */
 static struct argp_option options[] = {
-	{"interface",  	'i', 		"eth0",     	   0, "Just one interface to scan through" },
-	{"pt",   		't',  "port_range", 		   0, "Port-ranges - scanned tcp ports"},
-	{"pu",   		'u',  "port_range", 		   0, "Port-ranges - scanned udp ports"},
-	{"wait",   		'w',   "wait_time", 		   0, "Is the timeout in milliseconds"},
-	{"domain-name",	 0, 		   	 0,	OPTION_ALIAS, "Domain name"},
-	{"ip-address", 	 0, 		     0, OPTION_ALIAS, "IP address"},
-	
+	{"interface",  	'i', 		"eth0",     	    0, "Just one interface to scan through" },
+	{"pt",   		't',  "port_range", 		    0, "Port-ranges - scanned tcp ports"	},
+	{"pu",   		'u',  "port_range",  		    0, "Port-ranges - scanned udp ports"	},
+	{"wait",   		'w',   "wait_time",   		    0, "Is the timeout in milliseconds"		},
+	{"domain-name",	 0, 		   	 0,	 OPTION_ALIAS, "Domain name"						},
+	{"ip-address", 	 0, 		     0,	 OPTION_ALIAS, "IP address"							},
+	{"debug",	   'd', 			 0,	OPTION_HIDDEN, "Set program to debug mode"			},
+
   	{ 0 }
 };
 
@@ -31,7 +34,7 @@ static struct argp_option options[] = {
 struct arguments {
 	char *args;
 	char *eth0;       
-	bool tcp, udp;         
+	bool tcp, udp, debug;         
 	int port_range, wait_time;
 	char *ip_adress;
 };
@@ -57,6 +60,10 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 	struct arguments *arguments = state->input;
 
 	switch (key) {
+		case 'd':
+			arguments->debug = true;
+			break;
+
 		case 'i':
 			arguments->eth0 = arg;
 			break;
@@ -90,24 +97,24 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 	return 0;
 }
 
-/* Our argp parser. */
-static struct argp argp = { options, parse_opt, args_doc, doc};
 
 int main (int argc, char *argv[]) {
 	struct arguments arguments;
 
-	/* Default values. */
 	arguments.eth0 = NULL;
 	arguments.tcp = false;
 	arguments.udp = false;
+	arguments.debug = false;
 	arguments.port_range = -1;
 	arguments.wait_time = -1;
 	arguments.ip_adress = NULL;
 
-	/* Parse our arguments; every option seen by parse_opt will
-		be reflected in arguments. */
+	struct argp argp = { options, parse_opt, args_doc, doc};
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
-	arg_print(&arguments);
+	
+	if (arguments.debug) {
+		arg_print(&arguments);
+	}
 
 	exit (0);
 }
