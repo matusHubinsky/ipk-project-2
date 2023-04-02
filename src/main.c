@@ -35,7 +35,8 @@ struct arguments {
 	char *args;
 	char *eth0;       
 	bool tcp, udp, debug;         
-	int port_range, wait_time;
+	char *port_range; 
+	int wait_time;
 	char *ip_adress;
 };
 
@@ -43,11 +44,11 @@ static void arg_print(struct arguments *arguments) {
 	fprintf(stdout, "[i]: %s\n", arguments->eth0);
 	
 	if (arguments->tcp) {
-		fprintf(stdout, "[t]: %d\n", arguments->port_range);
+		fprintf(stdout, "[t]: %s\n", arguments->port_range);
 	}
 		
 	if (arguments->udp) {
-		fprintf(stdout, "[u]: %d\n", arguments->port_range);
+		fprintf(stdout, "[u]: %s\n", arguments->port_range);
 	}
 
 	fprintf(stdout, "[w]: %d\n", arguments->wait_time);
@@ -70,12 +71,12 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 
 		case 't':
 			arguments->tcp = true;
-			arguments->port_range = atoi(arg);
+			arguments->port_range = arg;
 			break;
 
 		case 'u':
 			arguments->udp = true;
-			arguments->port_range = atoi(arg);
+			arguments->port_range = arg;
 			break;
 
 		case 'w':
@@ -105,7 +106,7 @@ int main (int argc, char *argv[]) {
 	arguments.tcp = false;
 	arguments.udp = false;
 	arguments.debug = false;
-	arguments.port_range = -1;
+	arguments.port_range = NULL;
 	arguments.wait_time = -1;
 	arguments.ip_adress = NULL;
 
