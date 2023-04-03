@@ -1,9 +1,11 @@
 
 #include <stdlib.h>
 #include <argp.h>
-#include <stdbool.h>
 
 #include "../inc/main.h"
+#include "../inc/scanner.h"
+
+struct arguments_t arguments;
 
 const char *argp_program_version = "argp-ex3 1.0";
 const char *argp_program_bug_address = "<bug-gnu-utils@gnu.org>";
@@ -30,17 +32,8 @@ static struct argp_option options[] = {
   	{ 0 }
 };
 
-/* Used by main to communicate with parse_opt. */
-struct arguments {
-	char *args;
-	char *eth0;       
-	bool tcp, udp, debug;         
-	char *port_range; 
-	int wait_time;
-	char *ip_adress;
-};
 
-static void arg_print(struct arguments *arguments) {
+static void arg_print(struct arguments_t *arguments) {
 	fprintf(stdout, "[i]: %s\n", arguments->eth0);
 	
 	if (arguments->tcp) {
@@ -58,7 +51,7 @@ static void arg_print(struct arguments *arguments) {
 /* Parse a single option. */
 static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 	/* Get the input argument from argp_parse, which we know is a pointer to our arguments structure. */
-	struct arguments *arguments = state->input;
+	struct arguments_t *arguments = state->input;
 
 	switch (key) {
 		case 'd':
@@ -100,8 +93,6 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 
 
 int main (int argc, char *argv[]) {
-	struct arguments arguments;
-
 	arguments.eth0 = NULL;
 	arguments.tcp = false;
 	arguments.udp = false;
@@ -116,6 +107,11 @@ int main (int argc, char *argv[]) {
 	if (arguments.debug) {
 		arg_print(&arguments);
 	}
+
+	if (arguments.tcp) {
+		tcp_scan(&arguments);
+	}
+		
 
 	exit (0);
 }
