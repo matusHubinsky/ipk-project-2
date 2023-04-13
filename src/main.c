@@ -21,31 +21,31 @@ static char args_doc[] = "idk....";
 
 /* The options we understand. */
 static struct argp_option options[] = {
-	{"interface",  	'i', 		"eth0",     	    0, "Just one interface to scan through" },
-	{"pt",   		't',  "port_range", 		    0, "Port-ranges - scanned tcp ports"	},
-	{"pu",   		'u',  "port_range",  		    0, "Port-ranges - scanned udp ports"	},
-	{"wait",   		'w',   "wait_time",   		    0, "Is the timeout in milliseconds"		},
-	{"domain-name",	 0, 		   	 0,	 OPTION_ALIAS, "Domain name"						},
-	{"ip-address", 	 0, 		     0,	 OPTION_ALIAS, "IP address"							},
-	{"debug",	   'd', 			 0,	OPTION_HIDDEN, "Set program to debug mode"			},
+	{"network interface",  	'i', 	  "interface",     		    0, "Just one interface to scan through" },
+	{"pt",   		 		't', "tcp_port_range", 			    0, "Port-ranges - scanned tcp ports"	},
+	{"pu",   		 		'u', "udp_port_range",  		    0, "Port-ranges - scanned udp ports"	},
+	{"wait",   				'w',   	  "wait_time",   		    0, "Is the timeout in milliseconds"		},
+	{"domain-name",	   		  0, 		    	0,	 OPTION_ALIAS, "Domain name"						},
+	{"ip-address", 	   	      0, 		    	0,	 OPTION_ALIAS, "IP address"							},
+	{"debug",	     		'd', 			 	0,	OPTION_HIDDEN, "Set program to debug mode"			},
 
   	{ 0 }
 };
 
 
 static void arg_print(struct arguments_t *arguments) {
-	fprintf(stdout, "[i]: %s\n", arguments->eth0);
+	fprintf(stdout, "[i]: %s\n", arguments->interface);
 	
 	if (arguments->tcp) {
-		fprintf(stdout, "[t]: %s\n", arguments->port_range);
+		fprintf(stdout, "[t]: %s\n", arguments->tcp_port_range);
 	}
 		
 	if (arguments->udp) {
-		fprintf(stdout, "[u]: %s\n", arguments->port_range);
+		fprintf(stdout, "[u]: %s\n", arguments->udp_port_range);
 	}
 
 	fprintf(stdout, "[w]: %d\n", arguments->wait_time);
-	fprintf(stdout, "[a]: %s\n", arguments->ip_adress);
+	fprintf(stdout, "[a]: %s\n", arguments->ip_address);
 }
 
 /* Parse a single option. */
@@ -59,17 +59,17 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 			break;
 
 		case 'i':
-			arguments->eth0 = arg;
+			arguments->interface = arg;
 			break;
 
 		case 't':
 			arguments->tcp = true;
-			arguments->port_range = arg;
+			arguments->tcp_port_range = arg;
 			break;
 
 		case 'u':
 			arguments->udp = true;
-			arguments->port_range = arg;
+			arguments->udp_port_range = arg;
 			break;
 
 		case 'w':
@@ -81,7 +81,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 			break;
 
     	case ARGP_KEY_ARG:
-			arguments->ip_adress = arg;
+			arguments->ip_address = arg;
       		state->next = state->argc;
 			break;
 
@@ -93,13 +93,14 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 
 
 int main (int argc, char *argv[]) {
-	arguments.eth0 = NULL;
+	arguments.interface = NULL;
 	arguments.tcp = false;
 	arguments.udp = false;
 	arguments.debug = false;
-	arguments.port_range = NULL;
+	arguments.tcp_port_range = NULL;
+	arguments.udp_port_range = NULL;
 	arguments.wait_time = -1;
-	arguments.ip_adress = NULL;
+	arguments.ip_address = NULL;
 
 	struct argp argp = { options, parse_opt, args_doc, doc};
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
@@ -112,6 +113,5 @@ int main (int argc, char *argv[]) {
 		tcp_scan(&arguments);
 	}
 		
-
 	exit (0);
 }
