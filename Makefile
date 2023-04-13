@@ -5,7 +5,7 @@ LOGIN = xhubin04
 SERVER = merlin.fit.vutbr.cz
 CPP = gcc
 OBJ = obj
-CPPFLAGS = -Wall
+CPPFLAGS = -Wall -Wextra -pedantic -std=gnu99 -o2
 DEBUG = -g 
 SRCS = src/%.c
 OBJS = main.o scanner.o	
@@ -29,7 +29,7 @@ upload: $(LOGIN).zip
 	scp $(LOGIN).zip $(LOGIN)@$(SERVER):~/
 
 test: all
-	./$(PROJ) -i eth0 -w 10 -t 22,631,8080 localhost
+	./$(PROJ) -i enp7s0f3u1u1c2 -w 1000 -t 20,80,443,1023,8080 45.33.32.156
 
 clean: 
 	rm *.o ./$(PROJ) ./testfile
