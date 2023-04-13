@@ -10,11 +10,11 @@
 // TODO: port range for udp and tcp 
 struct arguments_t {
 	char *args;
-	char *eth0;       
+	char *interface;       
 	bool tcp, udp, debug;         
-	char *port_range; 
+	char *tcp_port_range, *udp_port_range; 
 	int wait_time;
-    char *ip_adress;
+    char *ip_address;
 };
 extern struct arguments_t arguments;
 
