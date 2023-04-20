@@ -1,117 +1,127 @@
+/**
+ * @file main.c
+ * @author Matus Hubinsky
+ * @brief main
+ * @date 17.04.2023
+ * @version 1.0.1
+ */
 
-#include <stdlib.h>
-#include <argp.h>
 
 #include "../inc/main.h"
-#include "../inc/scanner.h"
-
-struct arguments_t arguments;
-
-const char *argp_program_version = "argp-ex3 1.0";
-const char *argp_program_bug_address = "<bug-gnu-utils@gnu.org>";
-
-/* Program documentation. */
-static char doc[] = "\
-This is a simple TCP and UDP network L4 scanner. The program will scan specified \
-domain name or IP adresss (IPv4 or IPv6) and ports. It will output to stdout port\
-statuses (open, filtered, closed).";
-
-/* A description of the arguments we accept. */
-static char args_doc[] = "idk....";
-
-/* The options we understand. */
-static struct argp_option options[] = {
-	{"network interface",  	'i', 	  "interface",     		    0, "Just one interface to scan through" },
-	{"pt",   		 		't', "tcp_port_range", 			    0, "Port-ranges - scanned tcp ports"	},
-	{"pu",   		 		'u', "udp_port_range",  		    0, "Port-ranges - scanned udp ports"	},
-	{"wait",   				'w',   	  "wait_time",   		    0, "Is the timeout in milliseconds"		},
-	{"domain-name",	   		  0, 		    	0,	 OPTION_ALIAS, "Domain name"						},
-	{"ip-address", 	   	      0, 		    	0,	 OPTION_ALIAS, "IP address"							},
-	{"debug",	     		'd', 			 	0,	OPTION_HIDDEN, "Set program to debug mode"			},
-
-  	{ 0 }
-};
 
 
-static void arg_print(struct arguments_t *arguments) {
-	fprintf(stdout, "[i]: %s\n", arguments->interface);
-	
-	if (arguments->tcp) {
-		fprintf(stdout, "[t]: %s\n", arguments->tcp_port_range);
+/**
+ * @brief check if network interface exists, in case of not existing, sets first network interface
+ * 
+ * @param arguments data structure arguments_t with input arguments
+ * @return
+*/
+static void check_network_interface(struct arguments_t* arguments) {
+	bool exist = false;
+	struct ifaddrs *addrs;
+
+	getifaddrs(&addrs);
+
+	while (addrs) {
+		if (addrs->ifa_addr->sa_family == AF_PACKET)
+			if (arguments->interface == NULL) {
+				printf("%s\n", addrs->ifa_name);
+			} else if (strcmp(arguments->interface, addrs->ifa_name) == 0) {
+				exist = true;
+			}
+
+		addrs = addrs->ifa_next;
 	}
-		
-	if (arguments->udp) {
-		fprintf(stdout, "[u]: %s\n", arguments->udp_port_range);
+	freeifaddrs(addrs);
+
+	if (arguments->interface == NULL) {
+		return;
 	}
 
-	fprintf(stdout, "[w]: %d\n", arguments->wait_time);
-	fprintf(stdout, "[a]: %s\n", arguments->ip_address);
-}
-
-/* Parse a single option. */
-static error_t parse_opt (int key, char *arg, struct argp_state *state) {
-	/* Get the input argument from argp_parse, which we know is a pointer to our arguments structure. */
-	struct arguments_t *arguments = state->input;
-
-	switch (key) {
-		case 'd':
-			arguments->debug = true;
-			break;
-
-		case 'i':
-			arguments->interface = arg;
-			break;
-
-		case 't':
-			arguments->tcp = true;
-			arguments->tcp_port_range = arg;
-			break;
-
-		case 'u':
-			arguments->udp = true;
-			arguments->udp_port_range = arg;
-			break;
-
-		case 'w':
-			arguments->wait_time = atoi(arg);
-			break;
-
-    	case ARGP_KEY_NO_ARGS:
-			argp_usage(state);
-			break;
-
-    	case ARGP_KEY_ARG:
-			arguments->ip_address = arg;
-      		state->next = state->argc;
-			break;
-
-    	default:
-      		return ARGP_ERR_UNKNOWN;
+	if (!exist) {
+		fprintf(stderr, "Unknown network interface\n");
+		exit(1);
 	}
-	return 0;
 }
 
 
+/**
+ * @brief converts domain name into IP address
+ * 
+ * @param arguments data structure arguments_t with input arguments
+ * @return
+*/
+static void domain_to_adress(struct arguments_t* arguments) {
+	struct hostent *host_info = (struct hostent*) gethostbyname(arguments->ip_address);
+	// in case of IPv6
+	if (host_info) {
+		arguments->ip_address = inet_ntoa(*((struct in_addr *) (host_info->h_addr)));
+	}
+}
+
+
+/**
+ * @brief detect type od a IP address and returns its number (4 or 6)
+ * 
+ * @param arguments data structure arguments_t with input arguments
+ * @return IPv4 return 4, IPv6 return 6
+*/
+static int detect_ip_adress_version(struct arguments_t* arguments) {
+	char buffer[16];
+	if (inet_pton(AF_INET, arguments->ip_address, buffer)) {
+		arguments->IPv4 = true;
+		return 4;
+	} else if (inet_pton(AF_INET6, arguments->ip_address, buffer)) {
+		arguments->IPv6 = true;
+		return 6;
+	} else {
+		fprintf(stderr, "Wrong format of IP address\n");
+		exit(1);
+	}
+}
+
+
+/*
+ * @brief call all the functions to run a program
+ * 
+ * @bugs TCP scanner not implemented yet
+ * @param argc argument count
+ * @param argv
+ * @return 0 in case of success
+*/
 int main (int argc, char *argv[]) {
-	arguments.interface = NULL;
-	arguments.tcp = false;
-	arguments.udp = false;
-	arguments.debug = false;
-	arguments.tcp_port_range = NULL;
-	arguments.udp_port_range = NULL;
-	arguments.wait_time = -1;
-	arguments.ip_address = NULL;
+	// check OS type
+	if (strcmp(OS, "linux") != 0) {
+        fprintf(stderr, "ERROR: Program is NOT supported on this OS!\n");
+		fprintf(stderr, "Program is running ONLY on LINUX.\n");
+        return 1;
+	}
 
-	struct argp argp = { options, parse_opt, args_doc, doc};
+	// parse arguments
+	struct argp argp = {options, parse_opt, NULL, doc};
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 	
 	if (arguments.debug) {
 		arg_print(&arguments);
 	}
 
+	check_network_interface(&arguments);
+	domain_to_adress(&arguments);
+	detect_ip_adress_version(&arguments);
+	
+	printf("\n");
+	printf("Interesting ports on (%s):\n", arguments.ip_address);
+	printf("PORT      STATE\n");
+
+	// TCP scanner not implemented yet
 	if (arguments.tcp) {
-		tcp_scan(&arguments);
+		// tcp_scan(&arguments);
 	}
-		
-	exit (0);
+
+	// call UDP scanner
+	if (arguments.udp) {
+		udp_scan(&arguments);
+	}
+
+	return 0;
 }
